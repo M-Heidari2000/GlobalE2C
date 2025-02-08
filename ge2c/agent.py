@@ -54,7 +54,7 @@ class LQRAgent:
         C = torch.block_diag(self.cost_function.Q, self.cost_function.R)
         c = torch.zeros((state_dim + action_dim, 1), device=self.device)
 
-        F = torch.concatenate((self.transition_model.A, self.transition_model.B), dim=1)
+        F = torch.cat((self.transition_model.A, self.transition_model.B), dim=1)
         f = (
             self.transition_model.o
             + (self.transition_model.A - torch.eye(state_dim, device=self.device))
