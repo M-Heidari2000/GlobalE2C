@@ -67,7 +67,6 @@ def train(
     transition_model = TransitionModel(
         state_dim=config.state_dim,
         action_dim=env.action_space.shape[0],
-        hidden_dim=config.hidden_dim,
         min_var=config.min_var,
     ).to(device)
 

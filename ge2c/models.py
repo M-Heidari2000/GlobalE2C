@@ -88,7 +88,6 @@ class TransitionModel(nn.Module):
         self,
         state_dim: int,
         action_dim: int,
-        hidden_dim: Optional[int]=None,
         min_var: Optional[float]=1e-3,
     ):
         
@@ -96,8 +95,6 @@ class TransitionModel(nn.Module):
         
         self.state_dim = state_dim
         self.action_dim = action_dim
-
-        hidden_dim = hidden_dim if hidden_dim is not None else 2*state_dim
 
         self.A = nn.Parameter(torch.randn(self.state_dim, self.state_dim))
         self.B = nn.Parameter(torch.randn(self.state_dim, self.action_dim))
