@@ -106,7 +106,10 @@ class TransitionModel(nn.Module):
 
     @property
     def A(self):
-        return nn.functional.sigmoid(self.v.T) @ nn.functional.sigmoid(self.r)
+        return (
+            torch.eye(self.state_dim, device=self.r.device) + 
+            nn.functional.sigmoid(self.v.T) @ nn.functional.sigmoid(self.r)
+        )
 
     def forward(
         self,
