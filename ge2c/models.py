@@ -96,12 +96,20 @@ class TransitionModel(nn.Module):
         self.state_dim = state_dim
         self.action_dim = action_dim
 
-        self.A = nn.Parameter(torch.randn(self.state_dim, self.state_dim))
+        self.v = nn.Parameter(torch.randn(1, self.state_dim))
+        self.r = nn.Parameter(torch.randn(1, self.state_dim))
         self.B = nn.Parameter(torch.randn(self.state_dim, self.action_dim))
         self.o = nn.Parameter(torch.randn(1, self.state_dim))
         self.w = nn.Parameter(torch.randn(self.state_dim))
 
         self._min_var = min_var
+
+    @property
+    def A(self):
+        return (
+            torch.eye(self.state_dim, device=self.v.device)
+            + nn.functional.tanh(self.v).T @ nn.functional.tanh(self.r)
+        )
 
     def forward(
         self,
