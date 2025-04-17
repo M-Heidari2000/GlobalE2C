@@ -65,9 +65,13 @@ class StaticDataset(Dataset):
         action_dim: int
     ):
         self.capacity = capacity
+
+        self.observation_dim = observation_dim
+        self.action_dim = action_dim
         
         self.observations = torch.empty((capacity, observation_dim), dtype=torch.float32)
         self.actions = torch.empty((capacity, action_dim), dtype=torch.float32)
+        self.costs = torch.empty((capacity, 1), dtype=torch.float32)
         self.next_observation = torch.empty((capacity, observation_dim), dtype=torch.float32)
 
         self.index = 0
@@ -77,20 +81,23 @@ class StaticDataset(Dataset):
         return self.capacity if self.is_filled else self.index
     
     def __getitem__(self, index):
-        observations = self.observations[index]
-        actions = self.actions[index]
-        next_observations = self.next_observation[index]
+        observation = self.observations[index]
+        action = self.actions[index]
+        cost = self.costs[index]
+        next_observation = self.next_observation[index]
 
-        return observations, actions, next_observations
+        return observation, action, cost, next_observation
     
     def push(
         self,
         observation,
         action,
+        cost,
         next_observation,
     ):
         self.observations[self.index] = torch.as_tensor(observation)
         self.actions[self.index] = torch.as_tensor(action)
+        self.costs[self.index] = torch.as_tensor(cost)
         self.next_observation[self.index] = torch.as_tensor(next_observation)
 
         self.index = (self.index + 1) % self.capacity

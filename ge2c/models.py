@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from typing import Optional
+import monotonicnetworks as lmn
 from torch.distributions import MultivariateNormal
 
 
@@ -76,7 +77,69 @@ class Decoder(nn.Module):
     
     def forward(self, state):
         return self.mlp_layers(state)
+
+
+class CostModel(nn.Module):
+    """
+        Learnable quadratic cost function in the latent space
+    """
+
+    def __init__(
+        self,
+        state_dim: int,
+        action_dim: int,
+        device: str,
+        hidden_dim: Optional[int]=16,
+    ):
+        
+        super().__init__()
+
+        self.state_dim = state_dim
+        self.action_dim = action_dim
+        
+        self.device = device
+        self.A = nn.Parameter(
+            torch.eye(state_dim, device=self.device, dtype=torch.float32),
+        )
+        self.B = nn.Parameter(
+            torch.eye(action_dim, device=self.device, dtype=torch.float32)
+        )
+        self.q = nn.Parameter(
+            torch.randn((state_dim, 1), device=self.device, dtype=torch.float32)
+        )
+
+        # monotonic increasing function
+        self.F = lmn.MonotonicWrapper(
+            nn.Sequential(
+                lmn.LipschitzLinear(1, hidden_dim, kind="one-inf"),
+                lmn.GroupSort(2),
+                lmn.LipschitzLinear(hidden_dim, hidden_dim, kind="inf"),
+                lmn.GroupSort(2),
+                lmn.LipschitzLinear(hidden_dim, 1, kind="inf")
+            ),
+            monotonic_constraints=[1],
+        ).to(device=self.device)
+
+    @property
+    def Q(self):
+        return self.A @ self.A.T
     
+    @property
+    def R(self):
+        L = torch.tril(self.B)
+        diagonals = nn.functional.softplus(L.diagonal()) + 1e-4
+        X = 1 - torch.eye(self.action_dim, device=self.device, dtype=torch.float32)
+        L = L * X + diagonals.diag()
+        return L @ L.T
+    
+    def forward(self, state, action):
+        # x: b x
+        # u: b u
+        # TODO: use torch.einsum for efficieny
+        cost = 0.5 * state @ self.Q @ state.T + 0.5 * action @ self.R @ action.T
+        cost = cost.diagonal().unsqueeze(1) + state @ self.q
+        return self.F(cost)
+                
 
 class TransitionModel(nn.Module):
 

@@ -9,8 +9,6 @@ class TrainConfig:
     min_var: float = 1e-2
     dropout_p: float = 0.01
     buffer_capacity: int = 1000000
-    num_episodes: int = 100
-    test_size: float = 0.2
     num_epochs: int = 1024
     batch_size: int = 50
     lr: float = 1e-3
@@ -18,5 +16,6 @@ class TrainConfig:
     clip_grad_norm: int = 1000
     free_nats: int = 0
     kl_beta: float = 1
+    cost_weight: float = 1
 
     dict = asdict
